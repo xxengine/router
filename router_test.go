@@ -1,23 +1,24 @@
 package router_test
+
 import (
 	"testing"
 	"strconv"
-"github.com/orivil/router"
+	"gopkg.in/orivil/router.v0"
 )
 
 var r = router.NewRouter()
 
 type testData struct {
 	// for test function Add()
-	addRoute string
-	addID int
-	returnID int
+	addRoute  string
+	addID     int
+	returnID  int
 
 	// for test function Match()
 	matchPath string
-	matchID int
-	param router.Param
-	matched bool
+	matchID   int
+	param     router.Param
+	matched   bool
 }
 
 var data = []testData{
@@ -87,13 +88,13 @@ var data = []testData{
 	},
 }
 
-func checkID(expect int, got int, t *testing.T)  {
+func checkID(expect int, got int, t *testing.T) {
 	if expect != got {
 		t.Errorf("expect: %d, got: %d\n", expect, got)
 	}
 }
 
-func checkParam(expect router.Param, got router.Param, t *testing.T)  {
+func checkParam(expect router.Param, got router.Param, t *testing.T) {
 	if expect != nil || got != nil {
 		if expect != nil && got != nil {
 			if len(expect) != len(got) {
@@ -111,7 +112,7 @@ func checkParam(expect router.Param, got router.Param, t *testing.T)  {
 	}
 }
 
-func checkMatched(expect bool, got bool, t *testing.T)  {
+func checkMatched(expect bool, got bool, t *testing.T) {
 	if expect != got {
 		t.Errorf("expect: %d, got: %d\n", expect, got)
 	}
@@ -140,9 +141,9 @@ func BenchmarkAddId(b *testing.B) {
 	// 随机添加带参数的路由
 	for i := 1; i < b.N; i++ {
 		path := "/" + strconv.Itoa(i) +
-			"/::" + strconv.Itoa(i + 1) +
-			"/::" + strconv.Itoa(i + 2) +
-			"/::" + strconv.Itoa(i + 3)
+		"/::" + strconv.Itoa(i + 1) +
+		"/::" + strconv.Itoa(i + 2) +
+		"/::" + strconv.Itoa(i + 3)
 		r.Add(path, i)
 	}
 }

@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"log"
 	"fmt"
-	"github.com/orivil/comment"
-	"github.com/orivil/sorter"
-	"github.com/orivil/helper"
+	"gopkg.in/orivil/comment.v0"
+	"gopkg.in/orivil/sorter.v0"
+	"gopkg.in/orivil/helper.v0"
 )
 
 func checkErr(err error) {

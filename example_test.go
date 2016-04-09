@@ -1,7 +1,7 @@
 package router_test
 import (
 	"fmt"
-	"github.com/orivil/router"
+	"gopkg.in/orivil/router.v0"
 	"log"
 )
 
