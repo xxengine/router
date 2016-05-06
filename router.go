@@ -1,3 +1,9 @@
+// Copyright 2016 orivil Authors. All rights reserved.
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file.
+
+// Package router provide a controller container for store controllers and controller comments,
+// also provide a route matcher to config or match a route.
 package router
 import (
 	"strings"
