@@ -20,8 +20,8 @@ func checkErr(err error) {
 }
 
 type ActionFilter interface {
-	// FilterAction 阻止方法被注册进路由
-	// 返回 false 则不注册
+	// FilterAction for prevent register any actions to router,
+	// return false means not register
 	FilterAction(action string) bool
 }
 
@@ -67,7 +67,7 @@ func NewContainer(dir string, filter ActionFilter) *Container {
 		controllers: make(map[string]func() interface{}, 20),
 		actions: make(map[int]string, 50),
 		actionFilter: filter,
-		index: 1, // id 不能为 0
+		index: 1, // id cannot be 0
 	}
 }
 
@@ -193,11 +193,11 @@ func (c *Container) getCommentRoutes(comment string) []string {
 	strs := reg.FindAllString(comment, -1)
 	return strs
 
-	// in: "action comment @route {get|post}/login @route {pull}/user"
+	// in: "action comment @route {get|post}/login @route {put}/user"
 	//
 	// out: {
 	// 		"@route {get|post}/login",
-	// 		"@route {pull}/user",
+	// 		"@route {put}/user",
 	// 	}
 }
 
@@ -239,7 +239,7 @@ func (c *Container) getMethodsAndPath(routePath string) (methods []string, path 
 	path = strs[0][2]
 	return
 
-	// in: "{get|post|pull}/login"
+	// in: "{get|post|put}/login"
 	//
-	// out: {"get", "post", "pull"}, "login"
+	// out: {"get", "post", "put"}, "login"
 }
