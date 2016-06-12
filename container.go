@@ -19,55 +19,59 @@ func checkErr(err error) {
 	}
 }
 
-type ActionFilter interface {
-	// FilterAction for prevent register any actions to router,
-	// return false means not register
-	FilterAction(action string) bool
-}
+// ActionFilter check if ok to register the action to router, return
+// true means the action is ok to register.
+type ActionFilter func(action string) bool
 
-type Actions map[string]map[string]map[string]bool // {bundle.controller: {actions: true}}
+// {bundle: {controller: {actions: true}}
+type Actions map[string]map[string]map[string]bool
 
+// Container stores all of the controllers
 type Container struct {
-	// path manager
+
+	// the paths manager
 	r            *Router
 
-	// controller provider container
 	controllers  map[string]func() interface{}
 
-	// contains all of the action's full name(bundle.controller.action)
-	// {index: actionName}
+	// {index: bundle.controller.action}
 	actions      map[int]string
 
-	// contains all of the bundle dir's struct comment
+	// controller comments
 	comment      comment.MethodComment
 
-	// filter controller action to be registered
-	actionFilter ActionFilter
+	filter ActionFilter
 
-	// index the actions(action id)
+	// self-increase action id
 	index        int
 }
 
-// NewContainer 新建路由注册器并获取控制器注释
+// Param dir must be the top directory which contains all of the controllers,
+// the dir param is used for read controller comments.
 //
-// dir:  包含所有控制器的最底层目录, 通过此目录的所有子文件来获取控制器的注释
-// filter: 如果控制器继承了其他结构的方法, 需要将这些方法排除
+// Param filter is used to prevent some actions be registered to router, like
+// the functions which extend from another struct.
 func NewContainer(dir string, filter ActionFilter) *Container {
-	dirFilter := func(f os.FileInfo) bool {
-		// get all comment
-		return true
+
+	dirs, err := helper.GetAllSubDirs(dir)
+	if err != nil {
+		panic(err)
 	}
-	subDirs, err := helper.GetFirstSubDirs(dir)
-	checkErr(err)
-	_, methodComment, _, err := comment.GetDirComment(dirFilter, subDirs...)
-	checkErr(err)
+
+	// dir filter is not necessary here, so always return true.
+	dirFilter := func(f os.FileInfo) bool { return true }
+	_, methodComment, _, err := comment.GetDirComment(dirFilter, dirs...)
+	if err != nil {
+		panic(err)
+	}
 	return &Container{
 		r: NewRouter(),
 		comment: methodComment,
 		controllers: make(map[string]func() interface{}, 20),
 		actions: make(map[int]string, 50),
-		actionFilter: filter,
-		index: 1, // id cannot be 0
+		filter: filter,
+		// id cannot be 0
+		index: 1,
 	}
 }
 
@@ -100,8 +104,7 @@ func (c *Container) GetControllers() map[string]func() interface{} {
 	return c.controllers
 }
 
-// GetAllRouteMsg get all of the route message
-// only used for print
+// GetAllRouteMsg return all of the registered routes
 func GetAllRouteMsg(c *Container) (routeMsg []string) {
 	path_id := c.r.GetAll()
 	sorter := sorter.NewPrioritySorter(path_id)
@@ -144,15 +147,30 @@ func (c *Container) GetActions() (actions Actions) {
 	return
 }
 
-// Add for add route path and controller provider to the router container
+// Register route path and controller provider to the container.
 //
-// path: contains request method and url path, like "{get}/search", if the controller
-// action has no route comment, result would be "{get}/search/" + "actionName"
+// Param path contains request method and url path, like "{get}/search".
+// Param provider is used to provide the controller instance.
 //
-// provider: the controller provider, provide the controller instance
+// [Result]:
+//
+// If one of the controller action(e.g. action "Country") doesn't have any route
+// comments, the default route of the "Country" action would be:
+//
+// "{get}/search/Country"
+//
+// Or we can directly edit the route in "Country" action's comment:
+//
+// "// @route {get}/search/country"
+//
+// [Not suggest]:
+//
+// "{get|post}/path" will generate two routes "{get}/path" and "{post}/path", but I
+// suggest you do not use it like that because it will make your project more complex,
+// and what's the meaning of making a GET request and a POST request point to the
+// same action?
 func (c *Container) Add(path string, provider func() interface{}) {
 
-	// reflect the controller to get actions name
 	bundle, controller, actions := c.getControllerMsg(provider)
 
 	// store the controller provider
@@ -186,22 +204,22 @@ func (c *Container) Add(path string, provider func() interface{}) {
 	}
 }
 
-// getCommentRoutes get all routes from comment
+// getCommentRoutes returns all routes from comment
 func (c *Container) getCommentRoutes(comment string) []string {
 	pattern := `@route {.*}[\/|\w|\:|\-]*`
 	reg := regexp.MustCompile(pattern)
 	strs := reg.FindAllString(comment, -1)
 	return strs
 
-	// in: "action comment @route {get|post}/login @route {put}/user"
+	// input: "action comment @route {get|post}/login @route {put}/user"
 	//
-	// out: {
+	// output: {
 	// 		"@route {get|post}/login",
 	// 		"@route {put}/user",
 	// 	}
 }
 
-// getControllerMsg get controller's package name, struct name and action names
+// getControllerMsg returns controller's package name, struct name and action names
 func (c *Container) getControllerMsg(provider func() interface{}) (bundle, controller string, actions []string) {
 	instance := provider()
 	value := reflect.ValueOf(instance)
@@ -213,14 +231,14 @@ func (c *Container) getControllerMsg(provider func() interface{}) (bundle, contr
 	for i := 0; i < numMethod; i++ {
 		action := value.Type().Method(i).Name
 
-		// remove unexported method
+		// ignore un-exported method
 		f := []rune(action)[0]
 		if 'a' <= f && f <= 'z' {
 			continue
 		}
 
 		// filter actions
-		if c.actionFilter.FilterAction(action) {
+		if c.filter(action) {
 			actions = append(actions, action)
 		}
 	}
@@ -239,7 +257,7 @@ func (c *Container) getMethodsAndPath(routePath string) (methods []string, path 
 	path = strs[0][2]
 	return
 
-	// in: "{get|post|put}/login"
+	// input: "{get|post|put}/login"
 	//
-	// out: {"get", "post", "put"}, "login"
+	// output: {"get", "post", "put"}, "login"
 }

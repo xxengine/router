@@ -16,8 +16,9 @@ func ExampleRouter() {
 		log.Fatal(err)
 	}
 
-	// check if this route path was registered
+	// check if the route path was registered
 	if returnID != 0 {
+		// old id will be replaced with new id
 		fmt.Printf("route %d was covered by %d\n", returnID, id)
 	}
 
