@@ -138,7 +138,7 @@ func TestMatch(t *testing.T) {
 }
 
 func BenchmarkAddId(b *testing.B) {
-	// 随机添加带参数的路由
+	// Add random routes
 	for i := 1; i < b.N; i++ {
 		path := "/" + strconv.Itoa(i) +
 		"/::" + strconv.Itoa(i + 1) +
@@ -149,7 +149,7 @@ func BenchmarkAddId(b *testing.B) {
 }
 
 func BenchmarkMatch(b *testing.B) {
-	// 随机匹配 path
+	// Random match path
 	for i := 1; i < b.N; i++ {
 		path := "/" + strconv.Itoa(i) +
 		"/" + strconv.Itoa(i + 1) +
@@ -159,7 +159,7 @@ func BenchmarkMatch(b *testing.B) {
 	}
 }
 
-// 测试字符串转换速度
+// test the speed of method: strconv.Itoa()
 func BenchmarkStrconv(b *testing.B) {
 	var str string
 	for i := 1; i < b.N; i++ {

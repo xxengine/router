@@ -2,8 +2,8 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-// Package router provide a controller container for store controllers and controller comments,
-// also provide a route matcher to config or match a route.
+// Package router provides a container for storing controllers, also provided
+// a route matcher to configure the route and match an incoming request path.
 package router
 import (
 	"strings"
@@ -71,9 +71,9 @@ func (this *Router) getParam(nodePath string) (param string, contain bool) {
 	return
 }
 
-// Add for add path to trie, the function will return the end node's id
-// which the path matched, if the end node's id != 0, it means this node
-// has already registered a route and will return the registered id
+// Add is used to register path to trie, the function will return the last node's
+// stored id which the path matched, if the last node's stored id is not 0, means
+// this node has already registered a route and will return the registered id.
 func (this *Router) Add(path string, id int) (existId int, e error) {
 	currentNode := this.routes
 	routes := splitPath(path)
@@ -110,7 +110,7 @@ func (this *Router) Add(path string, id int) (existId int, e error) {
 	return
 }
 
-// GetAll get all registered route
+// GetAll returns all of the registered routes and the controller id.
 func (this *Router) GetAll() map[string]int {
 	return getNextAllPath("", this.routes.next)
 }
